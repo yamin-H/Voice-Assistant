@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voice demo · Step 1</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0c0e;
+      --panel: #121417;
+      --panel-2: #171a1e;
+      --line: #262a30;
+      --text: #e9ecef;
+      --muted: #8b939e;
+      --accent: #7be3a4;
+      --accent-dim: #1d3a2a;
+      --danger: #ff8f8f;
+      --danger-dim: #3a1d1d;
+      --warn: #f0c674;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: clamp(24px, 7vh, 80px) clamp(16px, 5vw, 32px);
+      background:
+        radial-gradient(900px 500px at 15% -10%, #152019 0%, transparent 60%),
+        radial-gradient(700px 400px at 105% 5%, #171a24 0%, transparent 55%),
+        var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell { width: 100%; max-width: 620px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(30px, 6vw, 42px);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .lede {
+      margin: 0 0 28px;
+      max-width: 52ch;
+      color: var(--muted);
+    }
+
+    code {
+      padding: 1px 6px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--panel-2);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.85em;
+    }
+
+    .card {
+      padding: clamp(20px, 4vw, 28px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 40%), var(--panel);
+      box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9);
+    }
+
+    .status {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .dot {
+      flex: 0 0 auto;
+      width: 11px;
+      height: 11px;
+      margin-top: 7px;
+      border-radius: 50%;
+      background: #4a5058;
+      box-shadow: 0 0 0 4px rgba(74, 80, 88, 0.12);
+      transition: background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .dot[data-state="connecting"] {
+      background: var(--warn);
+      box-shadow: 0 0 0 4px rgba(240, 198, 116, 0.14);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    .dot[data-state="live"] {
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(123, 227, 164, 0.14);
+    }
+
+    .dot[data-state="error"] {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255, 143, 143, 0.14);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    .status-title { margin: 0; font-size: 17px; font-weight: 600; }
+    .detail { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .facts div {
+      min-width: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    .facts dt {
+      margin-bottom: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .facts dd {
+      margin: 0;
+      overflow: hidden;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .label {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .participants ul {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .participants li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--panel-2);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .participants li.empty {
+      justify-content: flex-start;
+      border-style: dashed;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border: 1px solid #2e5c42;
+      border-radius: 99px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mic { margin: 20px 0 18px; }
+
+    .mic-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    #micLabel { color: var(--text); }
+
+    .meter {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #1c2025;
+    }
+
+    #meterFill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #3aa76d, var(--accent));
+      transition: width 80ms linear;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+
+    button:disabled { cursor: not-allowed; opacity: 0.4; }
+
+    button.primary { background: var(--accent); color: #07130c; }
+    button.primary:hover:not(:disabled) { background: #96efb8; }
+
+    button.secondary {
+      border-color: var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    button.secondary:hover:not(:disabled) { border-color: #3a4048; }
+
+    button.ghost { background: transparent; color: var(--muted); }
+    button.ghost:hover:not(:disabled) { color: var(--text); }
+
+    .message {
+      min-height: 20px;
+      margin: 14px 0 0;
+      color: var(--danger);
+      font-size: 13px;
+    }
+
+    .message:empty { margin: 0; min-height: 0; }
+
+    .footnote {
+      margin: 18px 2px 0;
+      color: #6d747d;
+      font-size: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .facts { grid-template-columns: 1fr; gap: 8px; }
+      .actions button { flex: 1 1 auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">Voice assistant · Step 1</p>
+    <h1>Room test</h1>
+    <p class="lede">
+      Joins <code>voice-demo</code> and publishes your microphone. No transcription or AI replies yet.
+    </p>
+
+    <section class="card">
+      <div class="status">
+        <span id="dot" class="dot" data-state="idle" aria-hidden="true"></span>
+        <div>
+          <p id="statusTitle" class="status-title">Not connected</p>
+          <p id="statusDetail" class="detail">Serve this page with the token server, then join the room.</p>
+        </div>
+      </div>
+
+      <dl class="facts">
+        <div>
+          <dt>Room</dt>
+          <dd id="roomName">voice-demo</dd>
+        </div>
+        <div>
+          <dt>Identity</dt>
+          <dd id="identity">—</dd>
+        </div>
+        <div>
+          <dt>Participants</dt>
+          <dd id="participantCount">0</dd>
+        </div>
+      </dl>
+
+      <div class="participants">
+        <p class="label">In the room</p>
+        <ul id="participantList">
+          <li class="empty">Nobody yet</li>
+        </ul>
+      </div>
+
+      <div class="mic">
+        <div class="mic-head">
+          <span id="micLabel">Mic off</span>
+          <span id="micDb">—</span>
+        </div>
+        <div class="meter" aria-hidden="true"><div id="meterFill"></div></div>
+      </div>
+
+      <div class="actions">
+        <button id="joinBtn" class="primary" type="button">Join room</button>
+        <button id="muteBtn" class="secondary" type="button" disabled>Mute mic</button>
+        <button id="leaveBtn" class="ghost" type="button" disabled>Leave</button>
+      </div>
+
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+    </section>
+
+    <p class="footnote">
+      Microphone audio is published to the room only. This page does not play back any audio.
+    </p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.23.0/dist/livekit-client.umd.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const { Room, RoomEvent, Track, ParticipantKind } = window.LivekitClient;
+
+      const ROOM_NAME = "voice-demo";
+      const IDENTITY = "web-" + randomHex(3);
+
+      const els = {
+        dot: document.getElementById("dot"),
+        statusTitle: document.getElementById("statusTitle"),
+        statusDetail: document.getElementById("statusDetail"),
+        roomName: document.getElementById("roomName"),
+        identity: document.getElementById("identity"),
+        participantCount: document.getElementById("participantCount"),
+        participantList: document.getElementById("participantList"),
+        micLabel: document.getElementById("micLabel"),
+        micDb: document.getElementById("micDb"),
+        meterFill: document.getElementById("meterFill"),
+        joinBtn: document.getElementById("joinBtn"),
+        muteBtn: document.getElementById("muteBtn"),
+        leaveBtn: document.getElementById("leaveBtn"),
+        message: document.getElementById("message"),
+      };
+
+      let room = null;
+      let joining = false;
+      let micOn = false;
+      let audioCtx = null;
+      let analyser = null;
+      let meterRaf = 0;
+      let levelBuf = null;
+
+      els.identity.textContent = IDENTITY;
+      els.roomName.textContent = ROOM_NAME;
+
+      function randomHex(bytes) {
+        const data = new Uint8Array(bytes);
+        crypto.getRandomValues(data);
+        return Array.from(data, (b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      function setStatus(state, title, detail) {
+        els.dot.dataset.state = state;
+        els.statusTitle.textContent = title;
+        els.statusDetail.textContent = detail || "";
+      }
+
+      function setMessage(text) {
+        els.message.textContent = text || "";
+      }
+
+      function hostOf(url) {
+        try { return new URL(url).host; } catch { return url; }
+      }
+
+      function isAgent(participant) {
+        if (!participant) return false;
+        if (ParticipantKind && participant.kind === ParticipantKind.AGENT) return true;
+        return /^agent[-_]/i.test(participant.identity || "");
+      }
+
+      function people() {
+        if (!room) return [];
+        return [room.localParticipant, ...room.remoteParticipants.values()].filter(Boolean);
+      }
+
+      function agentLine() {
+        const agent = people().find((p) => p !== room?.localParticipant && isAgent(p));
+        return agent
+          ? `Agent in the room as ${agent.identity}.`
+          : "Connected — waiting for the agent worker to join.";
+      }
+
+      function renderParticipants() {
+        const list = people();
+        els.participantCount.textContent = String(list.length);
+        els.participantList.replaceChildren();
+
+        if (list.length === 0) {
+          const empty = document.createElement("li");
+          empty.className = "empty";
+          empty.textContent = "Nobody yet";
+          els.participantList.append(empty);
+          return;
+        }
+
+        for (const person of list) {
+          const item = document.createElement("li");
+          const name = document.createElement("span");
+          const isYou = room && person === room.localParticipant;
+          name.textContent = person.identity + (isYou ? " (you)" : "");
+          item.append(name);
+
+          if (isAgent(person)) {
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.textContent = "agent";
+            item.append(badge);
+          }
+
+          els.participantList.append(item);
+        }
+      }
+
+      function startMeter() {
+        stopMeter();
+        const publication = room?.localParticipant.getTrackPublication(Track.Source.Microphone);
+        const streamTrack = publication?.track?.mediaStreamTrack;
+        if (!streamTrack) return;
+
+        try {
+          audioCtx = new AudioContext();
+          const source = audioCtx.createMediaStreamSource(new MediaStream([streamTrack]));
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 512;
+          analyser.smoothingTimeConstant = 0.6;
+          source.connect(analyser);
+          levelBuf = new Uint8Array(analyser.fftSize);
+          audioCtx.resume().catch(() => {});
+
+          const draw = () => {
+            if (!analyser) return;
+            analyser.getByteTimeDomainData(levelBuf);
+            let sum = 0;
+            for (let i = 0; i < levelBuf.length; i += 1) {
+              const sample = (levelBuf[i] - 128) / 128;
+              sum += sample * sample;
+            }
+            const rms = Math.sqrt(sum / levelBuf.length);
+            const level = Math.min(1, Math.max(0, rms * 3.2));
+            els.meterFill.style.width = (level * 100).toFixed(1) + "%";
+            const db = rms > 0 ? Math.round(20 * Math.log10(rms)) : -60;
+            els.micDb.textContent = micOn ? `${Math.max(-60, db)} dB` : "—";
+            meterRaf = requestAnimationFrame(draw);
+          };
+          draw();
+        } catch (err) {
+          setMessage("Mic level meter unavailable: " + errorText(err));
+        }
+      }
+
+      function stopMeter(clearLabel = true) {
+        if (meterRaf) cancelAnimationFrame(meterRaf);
+        meterRaf = 0;
+        if (audioCtx) {
+          audioCtx.close().catch(() => {});
+          audioCtx = null;
+        }
+        analyser = null;
+        levelBuf = null;
+        els.meterFill.style.width = "0%";
+        if (clearLabel) els.micDb.textContent = "—";
+      }
+
+      function syncButtons() {
+        const connected = room?.state === "connected";
+        els.joinBtn.disabled = joining || connected;
+        els.joinBtn.textContent = connected ? "Connected" : "Join room";
+        els.muteBtn.disabled = !connected;
+        els.muteBtn.textContent = micOn ? "Mute mic" : "Enable mic";
+        els.leaveBtn.disabled = !room || joining;
+      }
+
+      function errorText(err) {
+        const name = err?.name || "";
+        if (name === "NotAllowedError") {
+          return "Microphone permission was denied. Allow mic access for this site and try again.";
+        }
+        if (name === "NotFoundError") {
+          return "No microphone was found. Connect one and try again.";
+        }
+        return err?.message || String(err);
+      }
+
+      function wireRoom() {
+        room.on(RoomEvent.Connected, () => {
+          setStatus("live", "Connected", agentLine());
+          setMessage("");
+          renderParticipants();
+          syncButtons();
+        });
+
+        room.on(RoomEvent.Reconnecting, () => {
+          setStatus("connecting", "Reconnecting…", "Trying to stay in the room.");
+          syncButtons();
+        });
+
+        room.on(RoomEvent.Reconnected, () => {
+          setStatus("live", "Connected", agentLine());
+          renderParticipants();
+          syncButtons();
+        });
+
+        room.on(RoomEvent.Disconnected, () => {
+          stopMeter();
+          micOn = false;
+          room = null;
+          setStatus("idle", "Not connected", "Click Join room to connect again.");
+          els.micLabel.textContent = "Mic off";
+          renderParticipants();
+          syncButtons();
+        });
+
+        room.on(RoomEvent.ParticipantConnected, (participant) => {
+          renderParticipants();
+          if (room?.state === "connected") {
+            setStatus("live", "Connected", agentLine());
+            if (isAgent(participant)) setMessage("");
+          }
+        });
+
+        room.on(RoomEvent.ParticipantDisconnected, () => {
+          renderParticipants();
+          if (room?.state === "connected") setStatus("live", "Connected", agentLine());
+        });
+
+        room.on(RoomEvent.MediaDevicesError, (err) => {
+          setMessage("Microphone error: " + errorText(err));
+        });
+      }
+
+      async function enableMic() {
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true, {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          });
+          micOn = room.localParticipant.isMicrophoneEnabled;
+          els.micLabel.textContent = micOn ? "Mic live" : "Mic off";
+          if (micOn) startMeter();
+        } catch (err) {
+          micOn = false;
+          els.micLabel.textContent = "Mic off";
+          setMessage("Could not start the microphone: " + errorText(err));
+        }
+        syncButtons();
+      }
+
+      async function joinRoom() {
+        if (joining || room) return;
+        joining = true;
+        micOn = false;
+        setMessage("");
+        setStatus("connecting", "Connecting…", "Requesting a room token from the local server.");
+        syncButtons();
+
+        try {
+          const response = await fetch("/token?identity=" + encodeURIComponent(IDENTITY), {
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            throw new Error(`Token request failed (HTTP ${response.status}). Is the token server running?`);
+          }
+
+          const data = await response.json();
+          setStatus("connecting", "Connecting…", `Joining ${data.room} at ${hostOf(data.url)}.`);
+
+          room = new Room({ adaptiveStream: true, dynacast: true });
+          wireRoom();
+          await room.connect(data.url, data.token);
+          await enableMic();
+        } catch (err) {
+          setStatus("error", "Could not connect", "Check the token server and your LiveKit credentials.");
+          setMessage(errorText(err));
+          stopMeter();
+          micOn = false;
+          els.micLabel.textContent = "Mic off";
+          if (room) {
+            const stale = room;
+            room = null;
+            stale.removeAllListeners();
+            try { await stale.disconnect(); } catch { /* already gone */ }
+          }
+          renderParticipants();
+        } finally {
+          joining = false;
+          syncButtons();
+        }
+      }
+
+      async function toggleMute() {
+        if (!room || room.state !== "connected") return;
+        const next = !room.localParticipant.isMicrophoneEnabled;
+        try {
+          await room.localParticipant.setMicrophoneEnabled(next);
+          micOn = next;
+          els.micLabel.textContent = micOn ? "Mic live" : "Mic muted";
+          if (micOn) startMeter();
+          else stopMeter();
+          setMessage("");
+        } catch (err) {
+          setMessage("Could not change microphone state: " + errorText(err));
+        }
+        syncButtons();
+      }
+
+      async function leaveRoom() {
+        if (!room) return;
+        const current = room;
+        room = null;
+        try { await current.disconnect(); } catch { /* already gone */ }
+        stopMeter();
+        micOn = false;
+        els.micLabel.textContent = "Mic off";
+        setStatus("idle", "Not connected", "Click Join room to connect again.");
+        renderParticipants();
+        syncButtons();
+      }
+
+      els.joinBtn.addEventListener("click", joinRoom);
+      els.muteBtn.addEventListener("click", toggleMute);
+      els.leaveBtn.addEventListener("click", leaveRoom);
+
+      window.addEventListener("beforeunload", () => {
+        if (room) room.disconnect();
+      });
+
+      renderParticipants();
+      syncButtons();
+    })();
+  </script>
+</body>
+</html>

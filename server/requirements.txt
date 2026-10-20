@@ -1,0 +1,5 @@
+livekit-agents==1.8.8
+python-dotenv==1.2.4
+groq==1.7.0
+# Used by token_server.py (also pulled in by livekit-agents).
+aiohttp==3.14.5
