@@ -350,9 +350,11 @@
     </section>
 
     <p class="footnote">
-      Microphone audio is published to the room only. This page does not play back any audio.
+      Microphone audio is published to the room. The agent's voice replies play automatically when available.
     </p>
   </main>
+
+  <audio id="agentAudio" autoplay playsinline></audio>
 
   <script src="https://cdn.jsdelivr.net/npm/livekit-client@2.23.0/dist/livekit-client.umd.min.js"></script>
   <script>
@@ -388,6 +390,7 @@
       let analyser = null;
       let meterRaf = 0;
       let levelBuf = null;
+      let agentAudioSink = null;
 
       els.identity.textContent = IDENTITY;
       els.roomName.textContent = ROOM_NAME;
@@ -531,12 +534,44 @@
         return err?.message || String(err);
       }
 
+      function playAgentAudio(track) {
+        const audioEl = document.getElementById("agentAudio");
+        if (!audioEl) return;
+
+        // Create a new MediaStream with the agent's audio track
+        const stream = new MediaStream([track.mediaStreamTrack]);
+
+        // If there's already audio playing, replace it
+        if (audioEl.srcObject) {
+          audioEl.srcObject.getTracks().forEach(t => t.stop());
+        }
+
+        audioEl.srcObject = stream;
+        audioEl.play().catch(err => {
+          console.warn("Agent audio play failed:", err);
+        });
+
+        // Store reference for cleanup
+        agentAudioSink = track;
+      }
+
       function wireRoom() {
         room.on(RoomEvent.Connected, () => {
           setStatus("live", "Connected", agentLine());
           setMessage("");
           renderParticipants();
           syncButtons();
+
+          // Check for existing agent audio tracks
+          for (const participant of room.remoteParticipants.values()) {
+            if (isAgent(participant)) {
+              for (const publication of participant.trackPublications.values()) {
+                if (publication.track && publication.track.kind === Track.Kind.Audio) {
+                  playAgentAudio(publication.track);
+                }
+              }
+            }
+          }
         });
 
         room.on(RoomEvent.Reconnecting, () => {
@@ -552,6 +587,9 @@
 
         room.on(RoomEvent.Disconnected, () => {
           stopMeter();
+          if (agentAudioSink) {
+            agentAudioSink = null;
+          }
           micOn = false;
           room = null;
           setStatus("idle", "Not connected", "Click Join room to connect again.");
@@ -575,6 +613,19 @@
 
         room.on(RoomEvent.MediaDevicesError, (err) => {
           setMessage("Microphone error: " + errorText(err));
+        });
+
+        // Handle track subscriptions for agent audio
+        room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+          if (track.kind === Track.Kind.Audio && isAgent(participant)) {
+            playAgentAudio(track);
+          }
+        });
+
+        room.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+          if (track.kind === Track.Kind.Audio && isAgent(participant) && agentAudioSink) {
+            agentAudioSink = null;
+          }
         });
       }
 

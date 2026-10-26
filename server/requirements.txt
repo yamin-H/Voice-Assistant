@@ -1,5 +1,11 @@
 livekit-agents==1.8.8
 python-dotenv==1.2.4
 groq==1.7.0
+# Step 3: Silero VAD (v5 model) and its CPU PyTorch runtime.
+silero-vad==6.2.3
+torch==2.14.1
 # Used by token_server.py (also pulled in by livekit-agents).
 aiohttp==3.14.5
+# TTS dependencies
+edge-tts==7.3.1
+pydub==0.25.1
